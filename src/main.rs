@@ -10,11 +10,11 @@ fn render(window:&mut PistonWindow, event:Event, data:&[i32], width:i32) {
     window.draw_2d(&event, |context, graphics| {
         clear([1.0; 4], graphics);
 
-        for i in 0..(data.len() as i32)/width {
-            for j in 0..width {
-                if data[(i*width + j) as usize] == 1 {
+        for h in 0..(data.len() as i32)/width {
+            for w in 0..width {
+                if data[(h*width + w) as usize] == 1 {
                     rectangle([0.0, 0.0, 0.0, 1.0],
-                              [(i*10) as f64, (j*10) as f64, 10.0, 10.0],
+                              [(w*10) as f64, (h*10) as f64, 10.0, 10.0],
                               context.transform,
                               graphics);
                 }
@@ -72,11 +72,11 @@ fn main() {
     );
 
     let data = [
-        1, 0,
-        0, 1,
+        1, 0, 1,
+        0, 1, 0,
     ];
 
     while let Some(event) = window.next() {
-        render(&mut window, event, &data, 2);
+        render(&mut window, event, &data, 3);
     }
 }
