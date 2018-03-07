@@ -1,8 +1,10 @@
 extern crate clap;
+extern crate piston_window;
 
 use clap::{Arg, App};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use piston_window::*;
 
 fn main() {
     let matches = App::new("Game of life")
@@ -13,15 +15,52 @@ fn main() {
            .help("File that states initial status of the world")
            .required(true)
            .index(1))
+        .arg(Arg::with_name("width")
+           .short("w")
+           .long("width")
+           .value_name("WIDTH")
+           .help("width of the grid")
+           .default_value("64")
+           .takes_value(true))
+        .arg(Arg::with_name("height")
+           .short("h")
+           .long("height")
+           .value_name("HEIGHT")
+           .help("height of the grid")
+           .default_value("48")
+           .takes_value(true))
         .get_matches();
 
-    let world_filename = matches.value_of("FILE").unwrap();
+    // let world_filename = matches.value_of("FILE").unwrap();
 
-    let f = File::open(world_filename).expect("Unable to open file");
-    let f = BufReader::new(f);
+    // let f = File::open(world_filename).expect("Unable to open file");
+    // let f = BufReader::new(f);
 
-    for line in f.lines() {
-        let line = line.expect("Something happening while reading the line");
-        println!("Line: {}", line);
+    // for line in f.lines() {
+        // let line = line.expect("Something happening while reading the line");
+        // println!("Line: {}", line);
+    // }
+
+    let width:u32 = matches.value_of("width").unwrap().parse().expect("Need an integer for width");
+    let height:u32 = matches.value_of("height").unwrap().parse().expect("Need an integer for height");
+
+    let mut window: PistonWindow = PistonWindow::new(
+        OpenGL::V3_3,
+        0,
+        WindowSettings::new("Hello World!", [width*10, height*10])
+            .opengl(OpenGL::V3_3)
+            .srgb(false)
+            .build()
+            .unwrap(),
+    );
+
+    while let Some(event) = window.next() {
+        window.draw_2d(&event, |context, graphics| {
+            clear([1.0; 4], graphics);
+            rectangle([1.0, 0.0, 0.0, 1.0], // red
+                      [0.0, 0.0, 100.0, 100.0],
+                      context.transform,
+                      graphics);
+        });
     }
 }
