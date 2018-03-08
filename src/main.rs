@@ -6,27 +6,31 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use piston_window::*;
 
-fn render(window:&mut PistonWindow, event:Event, data:&[u32], width:u32) {
+#[derive(Clone)]
+enum CellType {
+    Alive,
+    Dead,
+}
+
+fn render(window:&mut PistonWindow, event:Event, data:&[CellType], width:u32) {
     window.draw_2d(&event, |context, graphics| {
         clear([1.0; 4], graphics);
 
         for h in 0..(data.len() as u32)/width {
             for w in 0..width {
-                if data[(h*width + w) as usize] == 1 {
-                    rectangle([0.0, 0.0, 0.0, 1.0],
-                              [(w*10) as f64, (h*10) as f64, 10.0, 10.0],
-                              context.transform,
-                              graphics);
+                match data[(h*width + w) as usize] {
+                    CellType::Alive => rectangle([0.0, 0.0, 0.0, 1.0], [(w*10) as f64, (h*10) as f64, 10.0, 10.0], context.transform, graphics),
+                    _ => {},
                 }
             }
         }
     });
 }
 
-fn data_from_file(filename:&str, width:u32, height:u32) -> Vec<u32> {
+fn data_from_file(filename:&str, width:u32, height:u32) -> Vec<CellType> {
     let f = File::open(filename).expect("Unable to open file");
     let f = BufReader::new(f);
-    let mut arr = vec![0; (width*height) as usize];
+    let mut arr = vec![CellType::Dead; (width*height) as usize];
 
     for (h, line) in f.lines().enumerate() {
         if (h as u32) == height {
@@ -41,7 +45,7 @@ fn data_from_file(filename:&str, width:u32, height:u32) -> Vec<u32> {
             }
 
             if c == 'x' {
-                arr[h*(width as usize) + w] = 1;
+                arr[h*(width as usize) + w] = CellType::Alive;
             }
         }
 
@@ -49,6 +53,19 @@ fn data_from_file(filename:&str, width:u32, height:u32) -> Vec<u32> {
     }
 
     return arr;
+}
+
+// Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
+// Any live cell with two or three live neighbours lives on to the next generation.
+// Any live cell with more than three live neighbours dies, as if by overpopulation.
+// Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+fn next_step(data:&mut [CellType], width:u32, height:u32) {
+    for cell in data {
+        match cell {
+            &mut CellType::Alive => {},
+            &mut CellType::Dead => {},
+        }
+    }
 }
 
 fn main() {
@@ -91,9 +108,11 @@ fn main() {
             .unwrap(),
     );
 
-    let data = data_from_file(world_filename, width, height);
+    let mut data = data_from_file(world_filename, width, height);
 
     while let Some(event) = window.next() {
         render(&mut window, event, &data, width);
+
+        next_step(data.as_mut_slice(), width, height);
     }
 }
