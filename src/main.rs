@@ -24,6 +24,7 @@ pub struct Game {
     data: Vec<CellType>,
     width: u32,
     height: u32,
+    seconds: f64,
 }
 
 impl Game {
@@ -52,6 +53,12 @@ impl Game {
     // Any live cell with more than three live neighbours dies, as if by overpopulation.
     // Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
     fn update(&mut self, args: &UpdateArgs) {
+        self.seconds += args.dt;
+
+        if self.seconds < 1.0 {
+            return;
+        }
+
         let mut newdata = Vec::new();
         {
             let data = &self.data;
@@ -65,6 +72,7 @@ impl Game {
         }
 
         self.data = newdata;
+        self.seconds = 0.0;
     }
 }
 
@@ -142,6 +150,7 @@ fn main() {
         data: data_from_file(world_filename, width, height),
         width: width,
         height: height,
+        seconds: 0.0,
     };
 
     let mut events = Events::new(EventSettings::new());
