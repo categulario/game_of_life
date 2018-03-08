@@ -60,6 +60,7 @@ impl Game {
         }
 
         let mut newdata = Vec::new();
+
         {
             let data = &self.data;
 
