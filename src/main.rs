@@ -30,12 +30,15 @@ impl Game {
     fn render(&mut self, args: &RenderArgs) {
         use graphics::*;
 
-        self.gl.draw(args.viewport(), |context, graphics| {
+        let data = &self.data;
+        let width = self.width;
+
+        self.gl.draw(args.viewport(), |mut context, mut graphics| {
             clear([1.0; 4], graphics);
 
-            for h in 0..(self.data.len() as u32)/self.width {
-                for w in 0..self.width {
-                    match self.data[(h*self.width + w) as usize] {
+            for h in 0..(data.len() as u32)/width {
+                for w in 0..width {
+                    match data[(h*width + w) as usize] {
                         CellType::Alive => rectangle([0.0, 0.0, 0.0, 1.0], [(w*10) as f64, (h*10) as f64, 10.0, 10.0], context.transform, graphics),
                         _ => {},
                     }
@@ -50,12 +53,15 @@ impl Game {
     // Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
     fn update(&mut self, args: &UpdateArgs) {
         let mut newdata = Vec::new();
+        {
+            let data = &self.data;
 
-        for cell in self.data {
-            newdata.push(match cell {
-                CellType::Alive => CellType::Dead,
-                CellType::Dead => CellType::Alive,
-            });
+            for cell in data {
+                newdata.push(match cell {
+                    &CellType::Alive => CellType::Dead,
+                    &CellType::Dead => CellType::Alive,
+                });
+            }
         }
 
         self.data = newdata;
