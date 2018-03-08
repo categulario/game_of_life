@@ -1,10 +1,17 @@
 extern crate clap;
-extern crate piston_window;
+extern crate piston;
+extern crate graphics;
+extern crate glutin_window;
+extern crate opengl_graphics;
 
 use clap::{Arg, App};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use piston_window::*;
+use piston::window::WindowSettings;
+use piston::event_loop::*;
+use piston::input::*;
+use glutin_window::GlutinWindow as Window;
+use opengl_graphics::{ GlGraphics, OpenGL };
 
 #[derive(Clone)]
 enum CellType {
@@ -12,19 +19,47 @@ enum CellType {
     Dead,
 }
 
-fn render(window:&mut PistonWindow, event:Event, data:&[CellType], width:u32) {
-    window.draw_2d(&event, |context, graphics| {
-        clear([1.0; 4], graphics);
+pub struct Game {
+    gl: GlGraphics,
+    data: Vec<CellType>,
+    width: u32,
+    height: u32,
+}
 
-        for h in 0..(data.len() as u32)/width {
-            for w in 0..width {
-                match data[(h*width + w) as usize] {
-                    CellType::Alive => rectangle([0.0, 0.0, 0.0, 1.0], [(w*10) as f64, (h*10) as f64, 10.0, 10.0], context.transform, graphics),
-                    _ => {},
+impl Game {
+    fn render(&mut self, args: &RenderArgs) {
+        use graphics::*;
+
+        self.gl.draw(args.viewport(), |context, graphics| {
+            clear([1.0; 4], graphics);
+
+            for h in 0..(self.data.len() as u32)/self.width {
+                for w in 0..self.width {
+                    match self.data[(h*self.width + w) as usize] {
+                        CellType::Alive => rectangle([0.0, 0.0, 0.0, 1.0], [(w*10) as f64, (h*10) as f64, 10.0, 10.0], context.transform, graphics),
+                        _ => {},
+                    }
                 }
             }
+        });
+    }
+
+    // Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
+    // Any live cell with two or three live neighbours lives on to the next generation.
+    // Any live cell with more than three live neighbours dies, as if by overpopulation.
+    // Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+    fn update(&mut self, args: &UpdateArgs) {
+        let mut newdata = Vec::new();
+
+        for cell in self.data {
+            newdata.push(match cell {
+                CellType::Alive => CellType::Dead,
+                CellType::Dead => CellType::Alive,
+            });
         }
-    });
+
+        self.data = newdata;
+    }
 }
 
 fn data_from_file(filename:&str, width:u32, height:u32) -> Vec<CellType> {
@@ -48,25 +83,11 @@ fn data_from_file(filename:&str, width:u32, height:u32) -> Vec<CellType> {
                 arr[h*(width as usize) + w] = CellType::Alive;
             }
         }
-
-        println!("Line: {}", line);
     }
 
     return arr;
 }
 
-// Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
-// Any live cell with two or three live neighbours lives on to the next generation.
-// Any live cell with more than three live neighbours dies, as if by overpopulation.
-// Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
-fn next_step(data:&mut [CellType], width:u32, height:u32) {
-    for cell in data {
-        match cell {
-            &mut CellType::Alive => {},
-            &mut CellType::Dead => {},
-        }
-    }
-}
 
 fn main() {
     let matches = App::new("Game of life")
@@ -98,21 +119,33 @@ fn main() {
     let width:u32 = matches.value_of("width").unwrap().parse().expect("Need an integer for width");
     let height:u32 = matches.value_of("height").unwrap().parse().expect("Need an integer for height");
 
-    let mut window: PistonWindow = PistonWindow::new(
-        OpenGL::V3_3,
-        0,
-        WindowSettings::new("Hello World!", [width*10, height*10])
-            .opengl(OpenGL::V3_3)
-            .srgb(false)
-            .build()
-            .unwrap(),
-    );
+    let opengl = OpenGL::V3_3;
 
-    let mut data = data_from_file(world_filename, width, height);
+    let mut window:Window = WindowSettings::new(
+            "Conway's Game of Life",
+            [width*10, height*10]
+        )
+        .opengl(opengl)
+        .srgb(false)
+        .exit_on_esc(true)
+        .build()
+        .unwrap();
 
-    while let Some(event) = window.next() {
-        render(&mut window, event, &data, width);
+    let mut game = Game {
+        gl: GlGraphics::new(opengl),
+        data: data_from_file(world_filename, width, height),
+        width: width,
+        height: height,
+    };
 
-        next_step(data.as_mut_slice(), width, height);
+    let mut events = Events::new(EventSettings::new());
+    while let Some(e) = events.next(&mut window) {
+        if let Some(r) = e.render_args() {
+            game.render(&r);
+        }
+
+        if let Some(u) = e.update_args() {
+            game.update(&u);
+        }
     }
 }

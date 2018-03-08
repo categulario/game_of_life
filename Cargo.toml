@@ -4,5 +4,8 @@ version = "0.1.0"
 authors = ["Abraham Toriz <awonderfulcode@gmail.com>"]
 
 [dependencies]
-piston_window = "0.70.0"
 clap = "2.31.1"
+piston = "0.36.0"
+piston2d-graphics = "0.26.0"
+pistoncore-glutin_window = "0.45.0"
+piston2d-opengl_graphics = "0.52.0"
