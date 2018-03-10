@@ -20,8 +20,25 @@ enum CellType {
     Dead,
 }
 
-fn alive_neighbours(data:&[CellType], index:usize) -> u32 {
-    return 1;
+fn alive_neighbours(data:&[CellType], index:usize, width:u32) -> u32 {
+    let cur_row = ((index as u32)/width) as i32;
+    let cur_col = ((index as u32)%width) as i32;
+    let mut count = 0;
+
+    for r in (cur_row-1)..(cur_row+2) {
+        for c in (cur_col)..(cur_col+2) {
+            let i = (r*(width as i32) + c);
+
+            if i>=0 && i < (data.len() as i32) {
+                count += match data[i as usize] {
+                    CellType::Alive => 1,
+                    _ => 0,
+                }
+            }
+        }
+    }
+
+    return count;
 }
 
 pub struct Game {
@@ -67,13 +84,13 @@ impl Game {
 
             for (index, cell) in data.iter().enumerate() {
                 newdata.push(match cell {
-                    &CellType::Alive => match alive_neighbours(data, index) {
+                    &CellType::Alive => match alive_neighbours(data, index, self.width) {
                         0...1 => CellType::Dead, // underpopulation
                         2...3 => CellType::Alive, // normal population
                         3...8 => CellType::Dead, // overpopulation
                         _ => CellType::Dead, // this doesn't really happen...
                     },
-                    &CellType::Dead => match alive_neighbours(data, index) {
+                    &CellType::Dead => match alive_neighbours(data, index, self.width) {
                         3 => CellType::Alive,
                         _ => CellType::Dead,
                     },
