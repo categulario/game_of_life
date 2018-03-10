@@ -5,18 +5,23 @@ extern crate glutin_window;
 extern crate opengl_graphics;
 
 use clap::{Arg, App};
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use piston::window::WindowSettings;
-use piston::event_loop::*;
-use piston::input::*;
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{ GlGraphics, OpenGL };
+use piston::event_loop::*;
+use piston::input::*;
+use piston::window::WindowSettings;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+use std::iter::Iterator;
 
 #[derive(Clone)]
 enum CellType {
     Alive,
     Dead,
+}
+
+fn alive_neighbours(data:&[CellType], index:usize) -> u32 {
+    return 1;
 }
 
 pub struct Game {
@@ -34,7 +39,7 @@ impl Game {
         let data = &self.data;
         let width = self.width;
 
-        self.gl.draw(args.viewport(), |mut context, mut graphics| {
+        self.gl.draw(args.viewport(), |context, graphics| {
             clear([1.0; 4], graphics);
 
             for h in 0..(data.len() as u32)/width {
@@ -48,10 +53,6 @@ impl Game {
         });
     }
 
-    // Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
-    // Any live cell with two or three live neighbours lives on to the next generation.
-    // Any live cell with more than three live neighbours dies, as if by overpopulation.
-    // Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
     fn update(&mut self, args: &UpdateArgs) {
         self.seconds += args.dt;
 
@@ -64,10 +65,18 @@ impl Game {
         {
             let data = &self.data;
 
-            for cell in data {
+            for (index, cell) in data.iter().enumerate() {
                 newdata.push(match cell {
-                    &CellType::Alive => CellType::Dead,
-                    &CellType::Dead => CellType::Alive,
+                    &CellType::Alive => match alive_neighbours(data, index) {
+                        0...1 => CellType::Dead, // underpopulation
+                        2...3 => CellType::Alive, // normal population
+                        3...8 => CellType::Dead, // overpopulation
+                        _ => CellType::Dead, // this doesn't really happen...
+                    },
+                    &CellType::Dead => match alive_neighbours(data, index) {
+                        3 => CellType::Alive,
+                        _ => CellType::Dead,
+                    },
                 });
             }
         }
