@@ -26,10 +26,10 @@ fn alive_neighbours(data:&[CellType], index:usize, width:u32) -> u32 {
     let mut count = 0;
 
     for r in (cur_row-1)..(cur_row+2) {
-        for c in (cur_col)..(cur_col+2) {
-            let i = (r*(width as i32) + c);
+        for c in (cur_col-1)..(cur_col+2) {
+            let i = r*(width as i32) + c;
 
-            if i>=0 && i < (data.len() as i32) {
+            if i>=0 && i < (data.len() as i32) && i != (index as i32) {
                 count += match data[i as usize] {
                     CellType::Alive => 1,
                     _ => 0,
@@ -45,7 +45,6 @@ pub struct Game {
     gl: GlGraphics,
     data: Vec<CellType>,
     width: u32,
-    height: u32,
     seconds: f64,
 }
 
@@ -87,7 +86,7 @@ impl Game {
                     &CellType::Alive => match alive_neighbours(data, index, self.width) {
                         0...1 => CellType::Dead, // underpopulation
                         2...3 => CellType::Alive, // normal population
-                        3...8 => CellType::Dead, // overpopulation
+                        4...8 => CellType::Dead, // overpopulation
                         _ => CellType::Dead, // this doesn't really happen...
                     },
                     &CellType::Dead => match alive_neighbours(data, index, self.width) {
@@ -176,7 +175,6 @@ fn main() {
         gl: GlGraphics::new(opengl),
         data: data_from_file(world_filename, width, height),
         width: width,
-        height: height,
         seconds: 0.0,
     };
 
