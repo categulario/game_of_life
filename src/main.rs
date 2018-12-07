@@ -1,9 +1,3 @@
-extern crate clap;
-extern crate piston;
-extern crate graphics;
-extern crate glutin_window;
-extern crate opengl_graphics;
-
 use clap::{Arg, App};
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{ GlGraphics, OpenGL };
@@ -84,9 +78,9 @@ impl Game {
             for (index, cell) in data.iter().enumerate() {
                 newdata.push(match cell {
                     &CellType::Alive => match alive_neighbours(data, index, self.width) {
-                        0...1 => CellType::Dead, // underpopulation
-                        2...3 => CellType::Alive, // normal population
-                        4...8 => CellType::Dead, // overpopulation
+                        0..=1 => CellType::Dead, // underpopulation
+                        2..=3 => CellType::Alive, // normal population
+                        4..=8 => CellType::Dead, // overpopulation
                         _ => CellType::Dead, // this doesn't really happen...
                     },
                     &CellType::Dead => match alive_neighbours(data, index, self.width) {
