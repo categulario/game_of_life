@@ -69,10 +69,10 @@ impl Game {
         });
     }
 
-    fn update(&mut self, args: &UpdateArgs) {
+    fn update(&mut self, args: &UpdateArgs, delay: f32) {
         self.seconds += args.dt;
 
-        if self.seconds < 1.0 {
+        if self.seconds < delay as f64 {
             return;
         }
 
@@ -152,12 +152,20 @@ fn main() {
            .help("height of the grid")
            .default_value("48")
            .takes_value(true))
+        .arg(Arg::with_name("delay")
+             .short("d")
+             .long("delay")
+             .value_name("DELAY")
+             .help("Milliseconds between steps")
+             .default_value("0.5")
+             .takes_value(true))
         .get_matches();
 
     let world_filename = matches.value_of("FILE").unwrap();
 
     let width:u32 = matches.value_of("width").unwrap().parse().expect("Need an integer for width");
     let height:u32 = matches.value_of("height").unwrap().parse().expect("Need an integer for height");
+    let delay:f32 = matches.value_of("delay").unwrap().parse().expect("Need a float for delay");
 
     let opengl = OpenGL::V3_3;
 
@@ -179,13 +187,14 @@ fn main() {
     };
 
     let mut events = Events::new(EventSettings::new());
+
     while let Some(e) = events.next(&mut window) {
         if let Some(r) = e.render_args() {
             game.render(&r);
         }
 
         if let Some(u) = e.update_args() {
-            game.update(&u);
+            game.update(&u, delay);
         }
     }
 }
