@@ -71,24 +71,21 @@ impl Game {
         }
 
         let mut newdata = Vec::new();
+        let data = &self.data;
 
-        {
-            let data = &self.data;
-
-            for (index, cell) in data.iter().enumerate() {
-                newdata.push(match cell {
-                    &CellType::Alive => match alive_neighbours(data, index, self.width) {
-                        0..=1 => CellType::Dead, // underpopulation
-                        2..=3 => CellType::Alive, // normal population
-                        4..=8 => CellType::Dead, // overpopulation
-                        _ => CellType::Dead, // this doesn't really happen...
-                    },
-                    &CellType::Dead => match alive_neighbours(data, index, self.width) {
-                        3 => CellType::Alive,
-                        _ => CellType::Dead,
-                    },
-                });
-            }
+        for (index, cell) in data.iter().enumerate() {
+            newdata.push(match cell {
+                &CellType::Alive => match alive_neighbours(data, index, self.width) {
+                    0..=1 => CellType::Dead, // underpopulation
+                    2..=3 => CellType::Alive, // normal population
+                    4..=8 => CellType::Dead, // overpopulation
+                    _ => CellType::Dead, // this doesn't really happen...
+                },
+                &CellType::Dead => match alive_neighbours(data, index, self.width) {
+                    3 => CellType::Alive,
+                    _ => CellType::Dead,
+                },
+            });
         }
 
         self.data = newdata;
