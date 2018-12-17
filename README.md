@@ -10,7 +10,7 @@ Debes tener instalado [rust](https://rustup.rs)
 
 * clona el proyecto
 * entra a la carpeta en la terminal
-* `cargo run -- -d 0.1 data/input.txt`
+* `cargo run -- -d 0.1 data/gospers_glider_gun.txt`
 
 Para más opciones sobre el programa:
 
