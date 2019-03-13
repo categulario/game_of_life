@@ -7,6 +7,7 @@ use piston::window::WindowSettings;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::iter::Iterator;
+use graphics::*;
 
 #[derive(Clone)]
 enum CellType {
@@ -44,8 +45,6 @@ pub struct Game {
 
 impl Game {
     fn render(&mut self, args: &RenderArgs) {
-        use graphics::*;
-
         let data = &self.data;
         let width = self.width;
 
